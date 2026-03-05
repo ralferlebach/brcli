@@ -25,41 +25,48 @@
 define('CLI_SCRIPT', true);
 
 require(__DIR__ . '/../../../config.php');
-require_once($CFG->libdir.'/clilib.php');
+require_once($CFG->libdir . '/clilib.php');
 require_once($CFG->dirroot . '/backup/util/includes/backup_includes.php');
 
 /**
  * Safely set a backup plan setting if it exists.
  *
- * Moodle versions and backup modes may expose different settings, so we set only when present.
+ * Moodle versions and backup modes may expose different settings,
+ * so we set only when present.
  *
- * @param backup_plan $plan
- * @param string $settingname
- * @param mixed $value
+ * @param backup_plan $plan        The backup plan instance.
+ * @param string      $settingname The name of the setting to set.
+ * @param mixed       $value       The value to assign.
+ * @return void
  */
 function tool_brcli_backup_set_if_exists(backup_plan $plan, string $settingname, $value): void {
     try {
         $setting = $plan->get_setting($settingname);
         $setting->set_value($value);
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         // Setting does not exist in this Moodle version or mode.
+        $e; // Prevent unused variable warning.
     }
 }
 
-// Now get cli options.
-list($options, $unrecognized) = cli_get_params(array(
-    'categoryid' => false,
-    'destination' => '',
-    'preset' => 'full',
-    // Fine-grained overrides (optional). If not provided, preset (if any) applies.
-    'users' => null,
-    'questionbank' => null,
-    'calendarevents' => null,
-    'competencies' => null,
-    'histories' => null,
-    'logs' => null,
-    'help' => false,
-    ), array('h' => 'help'));
+// Now get CLI options.
+list($options, $unrecognized) = cli_get_params(
+    [
+        'categoryid'     => false,
+        'destination'    => '',
+        'preset'         => 'full',
+        'users'          => null,
+        'questionbank'   => null,
+        'calendarevents' => null,
+        'competencies'   => null,
+        'histories'      => null,
+        'logs'           => null,
+        'help'           => false,
+    ],
+    [
+        'h' => 'help',
+    ]
+);
 
 if ($unrecognized) {
     $unrecognized = implode("\n  ", $unrecognized);
@@ -76,41 +83,47 @@ if (!$admin) {
     cli_error(get_string('noadminaccount', 'tool_brcli'));
 }
 
-// Normalise/validate destination.
+// Normalise and validate destination.
 $dir = rtrim($options['destination'], "/\\");
 if (empty($dir) || !file_exists($dir) || !is_dir($dir) || !is_writable($dir)) {
     cli_error(get_string('directoryerror', 'tool_brcli'));
 }
 
 // Check that the category exists.
-if ($DB->count_records('course_categories', array('id'=>$options['categoryid'])) == 0) {
+if ($DB->count_records('course_categories', ['id' => $options['categoryid']]) == 0) {
     cli_error(get_string('nocategory', 'tool_brcli'));
-} 
+}
 
-$categoryid = (int)$options['categoryid'];
-$courses = $DB->get_records('course', array('category' => $categoryid));
-$amount_of_courses = count($courses);
+$categoryid = (int) $options['categoryid'];
+$courses = $DB->get_records('course', ['category' => $categoryid]);
+$amountofcourses = count($courses);
 
 $index = 1;
 
 foreach ($courses as $cs) {
-    $bc = new backup_controller(backup::TYPE_1COURSE, $cs->id, backup::FORMAT_MOODLE,
-                                backup::INTERACTIVE_YES, backup::MODE_GENERAL, $admin->id);
-    
-    mtrace(get_string('performingbck', 'tool_brcli', $index . '/' . $amount_of_courses));
+    $bc = new backup_controller(
+        backup::TYPE_1COURSE,
+        $cs->id,
+        backup::FORMAT_MOODLE,
+        backup::INTERACTIVE_YES,
+        backup::MODE_GENERAL,
+        $admin->id
+    );
 
-    // Apply preset / overrides.
+    mtrace(get_string('performingbck', 'tool_brcli', $index . '/' . $amountofcourses));
+
+    // Apply preset and overrides.
     $plan = $bc->get_plan();
     $overrides = [];
     foreach (['users', 'questionbank', 'calendarevents', 'competencies', 'histories', 'logs'] as $name) {
         if ($options[$name] !== null) {
-            $overrides[$name] = (int)$options[$name];
+            $overrides[$name] = (int) $options[$name];
         }
     }
 
     try {
-        $settings = \tool_brcli\local\preset::build_settings((string)$options['preset'], $overrides);
-    } catch (invalid_argument_exception $e) {
+        $settings = \tool_brcli\local\preset::build_settings((string) $options['preset'], $overrides);
+    } catch (\InvalidArgumentException $e) {
         $bc->destroy();
         cli_error(get_string('invalidpreset', 'tool_brcli', $options['preset']));
     }
@@ -126,10 +139,11 @@ foreach ($courses as $cs) {
     $users = 1;
     $anonymised = 0;
     try {
-        $users = (int)$plan->get_setting('users')->get_value();
-        $anonymised = (int)$plan->get_setting('anonymize')->get_value();
-    } catch (Exception $e) {
-        // Ignore.
+        $users = (int) $plan->get_setting('users')->get_value();
+        $anonymised = (int) $plan->get_setting('anonymize')->get_value();
+    } catch (\Exception $e) {
+        // Settings may not exist; use defaults.
+        $e; // Prevent unused variable warning.
     }
     $filename = backup_plan_dbops::get_default_backup_filename($format, $type, $id, $users, $anonymised);
     tool_brcli_backup_set_if_exists($plan, 'filename', $filename);
@@ -138,9 +152,9 @@ foreach ($courses as $cs) {
     $bc->finish_ui();
     $bc->execute_plan();
     $results = $bc->get_results();
-    $file = $results['backup_destination'] ?? null; // May be empty if file already moved to target location.
+    $file = $results['backup_destination'] ?? null;
 
-    // Do we need to store backup somewhere else?
+    // Store backup to the destination directory if needed.
     if ($file) {
         $target = $dir . '/' . $filename;
         if ($file->copy_content_to($target)) {
@@ -150,8 +164,9 @@ foreach ($courses as $cs) {
         }
     }
     $bc->destroy();
-    $index = $index + 1;
+    $index++;
 }
+
 mtrace(get_string('operationdone', 'tool_brcli'));
 
 exit(0);

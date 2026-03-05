@@ -15,52 +15,63 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Preset + overrides handling for backup/restore plans.
+ * Preset and overrides handling for backup/restore plans.
  *
  * Extracted to make CLI behaviour testable and stable across Moodle versions.
  *
  * @package    tool_brcli
- * @copyright  2026
+ * @copyright  2026 Ralf Erlebach
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace tool_brcli\local;
 
-use invalid_argument_exception;
-
+/**
+ * Preset helper for backup and restore CLI plans.
+ *
+ * @package    tool_brcli
+ * @copyright  2026 Ralf Erlebach
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 final class preset {
+
+    /** @var string Full backup preset name. */
     public const PRESET_FULL = 'full';
+
+    /** @var string Content-only backup preset name. */
     public const PRESET_CONTENTONLY = 'contentonly';
 
     /**
-     * Returns plan settings based on preset + overrides.
+     * Returns plan settings based on preset and overrides.
      *
-     * @param string $preset Preset name.
-     * @param array $overrides e.g. ['users' => 0]. Values are cast to int.
-     * @param null|array $available If provided, only settings in this whitelist are returned.
-     * @return array<string,int>
+     * @param string     $preset    Preset name ('full' or 'contentonly').
+     * @param array      $overrides Key/value overrides, e.g. ['users' => 0]. Values are cast to int.
+     * @param array|null $available If provided, only settings in this whitelist are returned.
+     * @return array<string, int>
+     * @throws \InvalidArgumentException If the preset name is not recognised.
      */
     public static function build_settings(string $preset, array $overrides = [], ?array $available = null): array {
         $preset = strtolower(trim($preset));
         if (!in_array($preset, [self::PRESET_FULL, self::PRESET_CONTENTONLY], true)) {
-            throw new invalid_argument_exception('Invalid preset');
+            // Use a core PHP exception type here to avoid depending on Moodle exception class names.
+            throw new \InvalidArgumentException('Invalid preset');
         }
 
         $settings = [];
 
         if ($preset === self::PRESET_CONTENTONLY) {
             $settings = [
-                'users' => 0,
-                'role_assignments' => 0,
-                'groups' => 0,
-                'comments' => 0,
-                'badges' => 0,
-                'calendarevents' => 0,
-                'userscompletion' => 0,
-                'histories' => 0,
-                'logs' => 0,
-                'questionbank' => 0,
-                'competencies' => 0,
+                'users'              => 0,
+                'role_assignments'   => 0,
+                'groups'             => 0,
+                'comments'           => 0,
+                'badges'             => 0,
+                'calendarevents'     => 0,
+                'userscompletion'    => 0,
+                'histories'          => 0,
+                'logs'               => 0,
+                'questionbank'       => 0,
+                'competencies'       => 0,
                 'contentbankcontent' => 0,
             ];
         }
@@ -69,7 +80,7 @@ final class preset {
             if ($value === null) {
                 continue;
             }
-            $settings[(string)$name] = (int)$value;
+            $settings[(string) $name] = (int) $value;
         }
 
         if ($available !== null) {

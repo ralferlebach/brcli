@@ -25,39 +25,45 @@
 define('CLI_SCRIPT', true);
 
 require(__DIR__ . '/../../../config.php');
-require_once($CFG->libdir.'/clilib.php');
+require_once($CFG->libdir . '/clilib.php');
 require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
 
 /**
  * Safely set a restore plan setting if it exists.
  *
- * @param restore_plan $plan
- * @param string $settingname
- * @param mixed $value
+ * @param restore_plan $plan        The restore plan instance.
+ * @param string       $settingname The name of the setting to set.
+ * @param mixed        $value       The value to assign.
+ * @return void
  */
 function tool_brcli_restore_set_if_exists(restore_plan $plan, string $settingname, $value): void {
     try {
         $setting = $plan->get_setting($settingname);
         $setting->set_value($value);
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         // Setting does not exist in this Moodle version or mode.
+        $e; // Prevent unused variable warning.
     }
 }
 
-// Now get cli options.
-list($options, $unrecognized) = cli_get_params(array(
-    'categoryid' => false,
-    'source' => '',
-    'preset' => 'full',
-    // Fine-grained overrides (optional).
-    'users' => null,
-    'questionbank' => null,
-    'calendarevents' => null,
-    'competencies' => null,
-    'histories' => null,
-    'logs' => null,
-    'help' => false,
-    ), array('h' => 'help'));
+// Now get CLI options.
+list($options, $unrecognized) = cli_get_params(
+    [
+        'categoryid'     => false,
+        'source'         => '',
+        'preset'         => 'full',
+        'users'          => null,
+        'questionbank'   => null,
+        'calendarevents' => null,
+        'competencies'   => null,
+        'histories'      => null,
+        'logs'           => null,
+        'help'           => false,
+    ],
+    [
+        'h' => 'help',
+    ]
+);
 
 if ($unrecognized) {
     $unrecognized = implode("\n  ", $unrecognized);
@@ -75,41 +81,42 @@ if (!$admin) {
 }
 
 $dir = rtrim($options['source'], "/\\");
-if (empty($dir) || !file_exists($dir) || !is_dir($dir)) {    
+if (empty($dir) || !file_exists($dir) || !is_dir($dir)) {
     cli_error(get_string('directoryerror', 'tool_brcli'));
 }
 
 // Check that the category exists.
-if ($DB->count_records('course_categories', array('id'=>$options['categoryid'])) == 0) {
+if ($DB->count_records('course_categories', ['id' => $options['categoryid']]) == 0) {
     cli_error(get_string('nocategory', 'tool_brcli'));
-} 
+}
 
-
-$preset = (string)$options['preset'];
+$preset = (string) $options['preset'];
 
 $index = 1;
-$sourcefiles = new FilesystemIterator($dir, FilesystemIterator::SKIP_DOTS);
-// We count only .mbz files for progress reporting.
-$amount_of_courses = 0;
+$sourcefiles = new \FilesystemIterator($dir, \FilesystemIterator::SKIP_DOTS);
+
+// Count only .mbz files for progress reporting.
+$amountofcourses = 0;
 foreach ($sourcefiles as $f) {
-    if (strtolower((string)$f->getExtension()) === 'mbz') {
-        $amount_of_courses++;
+    if (strtolower((string) $f->getExtension()) === 'mbz') {
+        $amountofcourses++;
     }
 }
+
 // Rewind iterator.
-$sourcefiles = new FilesystemIterator($dir, FilesystemIterator::SKIP_DOTS);
+$sourcefiles = new \FilesystemIterator($dir, \FilesystemIterator::SKIP_DOTS);
 
 foreach ($sourcefiles as $sourcefile) {
-    if (strtolower((string)$sourcefile->getExtension()) !== 'mbz') {
+    if (strtolower((string) $sourcefile->getExtension()) !== 'mbz') {
         continue;
     }
 
-    mtrace(get_string('performingres', 'tool_brcli', $index . '/' . $amount_of_courses));
+    mtrace(get_string('performingres', 'tool_brcli', $index . '/' . $amountofcourses));
 
     // Extract the file.
     $packer = get_file_packer('application/vnd.moodle.backup');
     $backupid = restore_controller::get_tempdir_name(SITEID, $admin->id);
-    $path = "$CFG->tempdir/backup/$backupid/";
+    $path = $CFG->tempdir . '/backup/' . $backupid . '/';
     if (!$packer->extract_to_pathname($sourcefile->getPathname(), $path)) {
         mtrace(get_string('invalidbackupfile', 'tool_brcli', $sourcefile->getFilename()));
         $index++;
@@ -118,13 +125,13 @@ foreach ($sourcefiles as $sourcefile) {
 
     // Transaction.
     $transaction = $DB->start_delegated_transaction();
- 
+
     // Create new course.
-    $folder             = $backupid; // As found in $CFG->dataroot . '/temp/backup/'.
-    $categoryid         = (int)$options['categoryid'];
-    $userdoingrestore   = $admin->id; // e.g. 2 == admin
-    $courseid           = restore_dbops::create_new_course('', '', $categoryid);
- 
+    $folder = $backupid;
+    $categoryid = (int) $options['categoryid'];
+    $userdoingrestore = $admin->id;
+    $courseid = restore_dbops::create_new_course('', '', $categoryid);
+
     // Restore backup into course.
     $controller = new restore_controller(
         $folder,
@@ -135,18 +142,18 @@ foreach ($sourcefiles as $sourcefile) {
         backup::TARGET_NEW_COURSE
     );
 
-    // Apply preset / overrides.
+    // Apply preset and overrides.
     $plan = $controller->get_plan();
     $overrides = [];
     foreach (['users', 'questionbank', 'calendarevents', 'competencies', 'histories', 'logs'] as $name) {
         if ($options[$name] !== null) {
-            $overrides[$name] = (int)$options[$name];
+            $overrides[$name] = (int) $options[$name];
         }
     }
 
     try {
         $settings = \tool_brcli\local\preset::build_settings($preset, $overrides);
-    } catch (invalid_argument_exception $e) {
+    } catch (\InvalidArgumentException $e) {
         cli_error(get_string('invalidpreset', 'tool_brcli', $preset));
     }
 
@@ -157,9 +164,10 @@ foreach ($sourcefiles as $sourcefile) {
     $precheck = $controller->execute_precheck();
     if ($precheck !== true) {
         try {
-            $transaction->rollback(new Exception('Precheck failed'));
-        } catch (Exception $e) {
-            // Ignore.
+            $transaction->rollback(new \Exception('Precheck failed'));
+        } catch (\Exception $e) {
+            // Ignore rollback exceptions.
+            $e; // Prevent unused variable warning.
         }
         unset($transaction);
         $controller->destroy();

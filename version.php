@@ -25,13 +25,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'tool_brcli';
-$plugin->version   = 2026030500; // YYYYMMDDXX.
-
-// Require Moodle 4.5.0 (Build: 2024100700) or later.
-$plugin->requires  = 2024100700.00;
-
-// Explicitly declare supported major versions (introduced in Moodle 3.9).
+$plugin->version   = 2026030500;
+$plugin->requires  = 2024100700;
 $plugin->supported = [405, 501];
-
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->release   = 'v1.3';
