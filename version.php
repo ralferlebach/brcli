@@ -24,6 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+
 $plugin->component = 'tool_brcli';
 $plugin->version   = 2026030500;
 $plugin->requires  = 2024100700;
