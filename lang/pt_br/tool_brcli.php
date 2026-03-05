@@ -24,16 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Interface de linha de comando para backup e restauração';
-$string['unknowoption'] = 'Opção inválida: {$a}';
-$string['noadminaccount'] = 'Erro: Não há uma conta de administrador cadastrada!';
 $string['directoryerror'] = 'Erro: O diretório de destino informado não existe ou não pode ser escrito!';
-$string['nocategory'] = 'Erro: A categoria informada não existe!';
-$string['performingbck'] = 'Iniciando backup do curso {$a}...';
-$string['performingres'] = 'Restaurando backup do curso {$a}...';
-$string['operationdone'] = 'Finalizado!';
-$string['invalidbackupfile'] = 'Arquivo de backup inválido: {$a}';
-$string['invalidpreset'] = 'Preset inválido: {$a}. Valores suportados: full, contentonly.';
 $string['helpoptionbck'] = 'Realiza o backup de todos os cursos de uma categoria.
 
 Opções:
@@ -74,3 +65,12 @@ Exemplo:
     # Restaura apenas o conteúdo (ignora usuários, banco de questões, calendário, competências, logs, históricos, etc.)
     sudo -u www-data /usr/bin/php admin/tool/brcli/restore.php --categoryid=1 --source=/moodle/backup/ --preset=contentonly
 ';
+$string['invalidbackupfile'] = 'Arquivo de backup inválido: {$a}';
+$string['invalidpreset'] = 'Preset inválido: {$a}. Valores suportados: full, contentonly.';
+$string['noadminaccount'] = 'Erro: Não há uma conta de administrador cadastrada!';
+$string['nocategory'] = 'Erro: A categoria informada não existe!';
+$string['unknowoption'] = 'Opção inválida: {$a}';
+$string['performingbck'] = 'Iniciando backup do curso {$a}...';
+$string['performingres'] = 'Restaurando backup do curso {$a}...';
+$string['pluginname'] = 'Interface de linha de comando para backup e restauração';
+$string['operationdone'] = 'Finalizado!';

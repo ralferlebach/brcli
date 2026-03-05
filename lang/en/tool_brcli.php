@@ -24,16 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Backup and Restore Command-Line Interface';
-$string['unknowoption'] = 'Unknown option: {$a}';
-$string['noadminaccount'] = 'Error: No admin account was found!';
 $string['directoryerror'] = 'Error: Destination directory does not exist or is not writable!';
-$string['nocategory'] = 'Error: No category was found!';
-$string['performingbck'] = 'Performing backup of the {$a} course...';
-$string['performingres'] = 'Restoring backup of the {$a} course...';
-$string['operationdone'] = 'Done!';
-$string['invalidbackupfile'] = 'Invalid backup file: {$a}';
-$string['invalidpreset'] = 'Invalid preset: {$a}. Supported values: full, contentonly.';
 $string['helpoptionbck'] = 'Perform backup of the courses of a specific category.
 
 Options:
@@ -74,3 +65,12 @@ Example:
     # Restore as content-only (ignore user data, question bank, calendar, competencies, logs, histories, etc.)
     sudo -u www-data /usr/bin/php admin/tool/brcli/restore.php --categoryid=1 --source=/moodle/backup/ --preset=contentonly
 ';
+$string['invalidbackupfile'] = 'Invalid backup file: {$a}';
+$string['invalidpreset'] = 'Invalid preset: {$a}. Supported values: full, contentonly.';
+$string['noadminaccount'] = 'Error: No admin account was found!';
+$string['nocategory'] = 'Error: No category was found!';
+$string['operationdone'] = 'Done!';
+$string['performingbck'] = 'Performing backup of the {$a} course...';
+$string['performingres'] = 'Restoring backup of the {$a} course...';
+$string['pluginname'] = 'Backup and Restore Command-Line Interface';
+$string['unknowoption'] = 'Unknown option: {$a}';

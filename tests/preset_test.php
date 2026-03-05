@@ -37,7 +37,6 @@ use tool_brcli\local\preset;
  * @coversDefaultClass \tool_brcli\local\preset
  */
 final class preset_test extends \basic_testcase {
-
     /**
      * Test that the full preset returns an empty settings array by default.
      *

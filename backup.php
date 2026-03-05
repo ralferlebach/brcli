@@ -50,7 +50,7 @@ function tool_brcli_backup_set_if_exists(backup_plan $plan, string $settingname,
 }
 
 // Now get CLI options.
-list($options, $unrecognized) = cli_get_params(
+[$options, $unrecognized] = cli_get_params(
     [
         'categoryid'     => false,
         'destination'    => '',

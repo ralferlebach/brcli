@@ -34,7 +34,6 @@ namespace tool_brcli\local;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class preset {
-
     /** @var string Full backup preset name. */
     public const PRESET_FULL = 'full';
 

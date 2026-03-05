@@ -47,7 +47,7 @@ function tool_brcli_restore_set_if_exists(restore_plan $plan, string $settingnam
 }
 
 // Now get CLI options.
-list($options, $unrecognized) = cli_get_params(
+[$options, $unrecognized] = cli_get_params(
     [
         'categoryid'     => false,
         'source'         => '',
