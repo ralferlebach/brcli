@@ -100,35 +100,23 @@ foreach ($courses as $cs) {
     mtrace(get_string('performingbck', 'tool_brcli', $index . '/' . $amount_of_courses));
 
     // Apply preset / overrides.
-    $preset = strtolower((string)$options['preset']);
-    if (!in_array($preset, ['full', 'contentonly'], true)) {
+    $plan = $bc->get_plan();
+    $overrides = [];
+    foreach (['users', 'questionbank', 'calendarevents', 'competencies', 'histories', 'logs'] as $name) {
+        if ($options[$name] !== null) {
+            $overrides[$name] = (int)$options[$name];
+        }
+    }
+
+    try {
+        $settings = \tool_brcli\local\preset::build_settings((string)$options['preset'], $overrides);
+    } catch (invalid_argument_exception $e) {
         $bc->destroy();
         cli_error(get_string('invalidpreset', 'tool_brcli', $options['preset']));
     }
 
-    $plan = $bc->get_plan();
-
-    // contentonly = course content without users and typical user-related/course-history data.
-    if ($preset === 'contentonly') {
-        tool_brcli_backup_set_if_exists($plan, 'users', 0);
-        tool_brcli_backup_set_if_exists($plan, 'role_assignments', 0);
-        tool_brcli_backup_set_if_exists($plan, 'groups', 0);
-        tool_brcli_backup_set_if_exists($plan, 'comments', 0);
-        tool_brcli_backup_set_if_exists($plan, 'badges', 0);
-        tool_brcli_backup_set_if_exists($plan, 'calendarevents', 0);
-        tool_brcli_backup_set_if_exists($plan, 'userscompletion', 0);
-        tool_brcli_backup_set_if_exists($plan, 'histories', 0);
-        tool_brcli_backup_set_if_exists($plan, 'logs', 0);
-        tool_brcli_backup_set_if_exists($plan, 'questionbank', 0);
-        tool_brcli_backup_set_if_exists($plan, 'competencies', 0);
-        tool_brcli_backup_set_if_exists($plan, 'contentbankcontent', 0);
-    }
-
-    // Fine-grained overrides (only apply if option was provided).
-    foreach (['users', 'questionbank', 'calendarevents', 'competencies', 'histories', 'logs'] as $name) {
-        if ($options[$name] !== null) {
-            tool_brcli_backup_set_if_exists($plan, $name, (int)$options[$name]);
-        }
+    foreach ($settings as $name => $value) {
+        tool_brcli_backup_set_if_exists($plan, $name, $value);
     }
 
     // Set the default filename.

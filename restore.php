@@ -85,10 +85,7 @@ if ($DB->count_records('course_categories', array('id'=>$options['categoryid']))
 } 
 
 
-$preset = strtolower((string)$options['preset']);
-if (!in_array($preset, ['full', 'contentonly'], true)) {
-    cli_error(get_string('invalidpreset', 'tool_brcli', $options['preset']));
-}
+$preset = (string)$options['preset'];
 
 $index = 1;
 $sourcefiles = new FilesystemIterator($dir, FilesystemIterator::SKIP_DOTS);
@@ -140,25 +137,21 @@ foreach ($sourcefiles as $sourcefile) {
 
     // Apply preset / overrides.
     $plan = $controller->get_plan();
-    if ($preset === 'contentonly') {
-        tool_brcli_restore_set_if_exists($plan, 'users', 0);
-        tool_brcli_restore_set_if_exists($plan, 'role_assignments', 0);
-        tool_brcli_restore_set_if_exists($plan, 'groups', 0);
-        tool_brcli_restore_set_if_exists($plan, 'comments', 0);
-        tool_brcli_restore_set_if_exists($plan, 'badges', 0);
-        tool_brcli_restore_set_if_exists($plan, 'calendarevents', 0);
-        tool_brcli_restore_set_if_exists($plan, 'userscompletion', 0);
-        tool_brcli_restore_set_if_exists($plan, 'histories', 0);
-        tool_brcli_restore_set_if_exists($plan, 'logs', 0);
-        tool_brcli_restore_set_if_exists($plan, 'questionbank', 0);
-        tool_brcli_restore_set_if_exists($plan, 'competencies', 0);
-        tool_brcli_restore_set_if_exists($plan, 'contentbankcontent', 0);
-    }
-
+    $overrides = [];
     foreach (['users', 'questionbank', 'calendarevents', 'competencies', 'histories', 'logs'] as $name) {
         if ($options[$name] !== null) {
-            tool_brcli_restore_set_if_exists($plan, $name, (int)$options[$name]);
+            $overrides[$name] = (int)$options[$name];
         }
+    }
+
+    try {
+        $settings = \tool_brcli\local\preset::build_settings($preset, $overrides);
+    } catch (invalid_argument_exception $e) {
+        cli_error(get_string('invalidpreset', 'tool_brcli', $preset));
+    }
+
+    foreach ($settings as $name => $value) {
+        tool_brcli_restore_set_if_exists($plan, $name, $value);
     }
 
     $precheck = $controller->execute_precheck();
