@@ -13,6 +13,7 @@ Please type the commands below to know how to use this plugin:
 `sudo -u www-data /usr/bin/php admin/tool/brcli/restore.php --help`
 
 ## Release notes
+* v1.3 - additional options for backupping (neglect users, log, histories etc.) added
 * v1.2 - the description of the plugin was improved.
 * v1.1 - it is mandatory to inform the destination folder.
 * v1.0 - the restore feature is available.
